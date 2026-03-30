@@ -1,41 +1,24 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/EruK4M2B)
-# Zabbix agent a Ansible
+1. Instalace Zabbix appliance
+Nejprve jsem nainstaloval Zabbix appliance – hotové virtuálky s předinstalovaným Zabbixem. Protože mi na localhostu běžela nějaká služba na portu 80, nemohl jsem použít klasický NAT režim (docházelo by ke kolizi portů). Místo toho jsem nastavil síťový režim "Pouze s hostitelem" (Host-only) a appliance přidělil statickou IP adresu 192.168.56.101. Takhle mám Zabbix webové rozhraní dostupné na jasné adrese a nemusím řešit přesměrování portů.
 
-Repository pro vyuku na SPOS DK
+2. Příprava Ansible prostředí
+Dále jsem upravil konfiguraci v repozitáři – konkrétně v souboru ansible_provision.yml jsem opravil URL na svůj GitHub, aby si Ansible správně stahovalo potřebné playbooky a role.
 
-## První kroky s Ansible a Zabbix agent2
+3. Spuštění infrastruktury
+Pomocí vagrant up jsem spustil virtuální stroje definované ve Vagrantfilu. Tím se vytvořily instance, které chci monitorovat – v mém případě bastion a další servery.
 
-![Zabbix & Ansible](./images/zbx7-ansible.png)
+4. Spuštění Ansible playbooku
+Následně jsem spustil Ansible playbook, který zajistil:
 
-- Zabbix enterprise-class open source distributed monitoring solution - [Zabbix Appliance](https://www.zabbix.com/documentation/7.0/en/manual/appliance)
-- Vagrant utility for managing virtual machines - [Vagrant](https://developer.hashicorp.com/vagrant)
-- Vagrant box from [bento](https://github.com/chef/bento) - [bento/ubuntu-24.04](https://portal.cloud.hashicorp.com/vagrant/discover/bento/ubuntu-24.04)
-- Red Hat Ansible Automation Platform - [Ansible](https://www.redhat.com/en/technologies/management/ansible)
-- Linux Ubuntu distribution - [Ubuntu server](https://ubuntu.com/server)
-- AlmaLinux distribution - [AlmaLinux OS](https://almalinux.org)
+instalaci Zabbix agentů na všechny spuštěné virtuálky
 
-## Example
+jejich správné nakonfigurování a napojení na Zabbix server
 
-```console
-vagrant up
-vagrant ssh
-sudo su -
-cd /opt/repo/
-ansible-playbook -i inventory.ini -l bastion configure_servers.yml
-```
+5. Nastavení autoregistrace v Zabbixu
+V Zabbix webovém rozhraní jsem vytvořil autoregistrační pravidlo. Díky tomu se každý nový stroj, na kterém běží Zabbix agent, automaticky zaregistruje do monitorovacího systému, jakmile se poprvé připojí.
 
-# Požadované známkované úkoly
+6. Úprava metadat pro autoregistraci
+Aby autoregistrace správně fungovala, upravil jsem v playbooku host metadata – konkrétně jsem nastavil, aby se stroje označovaly podle své role (např. bastion, webserver, databáze). Díky tomu je pak můžu v Zabbixu automaticky přiřazovat do příslušných skupin a používat na ně správné šablony.
 
-- Zprovozněte si Zabbix Appliance a nastavte druhou síťovou kartu viz /etc/sysconfig/network-scripts/ifcfg-eth1 v AlmaLinux
-- Upravte URL Vašeho Github Classroom projektu v souboru ansible_provision.yml v Tasku "Cloning Git repository" pro klonování do VM  Bastion-ansible
-- Upravte Ansible playbook pro instalaci Zabbix agenta pro instalaci druhé generace Zabbix Agent2 ve verzi 7.0 LTS
-- Upravte Ansible playbook pro instalaci Zabbix agenta, nastavte direktivu HostMetadata ( [dokumetace community.zabbix](https://galaxy.ansible.com/ui/repo/published/community/zabbix/docs/ZABBIX_AGENT_ROLE/) )
-- Provedené změny aktualizujte v ve Vašem git repository (git add; git commit -m "zmeny"; git push)
-- V Zabbix Appliance vytvoř auto-registrační pravidlo v akcích s HostMetadata a dolož sceenem obrazovky
-- Nastartuj připravenou VM Bastion-ansible pomoci Vagrant up - upravte dle svého nastavení síť pro propojení se Zabbix Appliance
-- Přihlaš se do VM Bastion-ansible a spusť ansible playbook v adresáři /opt/repo pro instalaci a konfiguraci Zabbix agenta viz example
-- Vytvoř složku screenshots a config ve svém projektu
-- Do adresáře screenshots udělej snímky s nazvy souboru dokazující pruběh své prace, ansible log, zabbix auto-registrační pravidlo, a registrovaného hosta + průběh funkčního monitorování VM Bastion atd.
-- Do adresáře config vykopiruj konfigurační soubor agenta /etc/zabbix/zabbix_agent2.conf který sestavil Ansible
-
-...
+7. Výsledek
+Po dokončení celého procesu se mi bastion (a další stroje) objevil v Zabbixu automaticky, bez nutnosti manuálního přidávání. Monitoring běží a vše je připravené k dalšímu rozšiřování.
